@@ -80,27 +80,30 @@ def populateDb():
 
   print 'Loading small body data...this may take a while'
   print DATA_PATH
-  reader = csv.DictReader(open(DATA_PATH), delimiter=',', quotechar='"')
+  df = pp.read_csv(DATA_PATH)
+
+  df.full_name = df.full_name.map(np.str.strip)
+  df.name = df.name.map(np.str.strip)
+
+  df.dv = deltav.CalcDeltaV(df)
+  df.prov_des = pf.pdes
+
   designation_regex = re.compile('.*\(([^\)]*)\)')
-  n = 0
+  def UpdateProvDes(row):
+    m = designation_regex.match(row['full_name'])
+    if not row['prov_des'] and m:
+      row['prov_des']= m.groups()[0]
+    return row
+  df = df.apply(UpdateProvDes, axis=1)
+
+  for col in df.columns:
+    df[col] = df[col].str.strip()
+
+  df.spec_T = df.spec_T.str.replace(':', '')
+  df.spec_B = df.spec_B.str.replace(':', '')
+
+  #todo spec_b
   for row in reader:
-    if row['spec_B'] == '':
-      newspec = THOLEN_MAPPINGS.get(row['spec_T'], None)
-      if newspec:
-        # TODO should have our own merged spec row, instead we overwrite spec_B
-        row['spec_B'] = newspec.strip()
-      elif row['pdes'] == '2012 DA14':
-        print 'Adjust 2012 DA14'
-        row['spec_B'] = 'L'
-      elif row['class'] in COMET_CLASSES:
-        row['spec_B'] = 'comet'
-      else:
-        continue # NOTE disable this to create the full db (about 600k objects)
-        row['spec_B'] = 'S'
-
-    if row['spec_B'] == 'C type':
-      row['spec_B'] = 'C'
-
     # match it with its delta-v
     m = designation_regex.match(row['full_name'])
     if 'pdes' in row and 'prov_des' not in row:
@@ -113,14 +116,6 @@ def populateDb():
     else:
       row['prov_des'] = ''
 
-    # Clean up inputs
-    for key,val in row.items():
-      try:
-        fv = float(val)
-      except ValueError, TypeError:
-        row[key] = val.strip()
-      else:
-        row[key] = fv
     row['spec_T'] = row['spec_T'].replace(':', '')
     row['spec_B'] = row['spec_B'].replace(':', '')
 
