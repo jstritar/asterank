@@ -8,6 +8,7 @@ import base64
 import re
 
 import api
+from stackblink import stackblink
 from skymorph import skymorph
 
 app = Flask(__name__)
@@ -180,6 +181,13 @@ def skymorph_fast_image():
 @app.route('/discover')
 def discover():
   return render_template('discover.html')
+
+@app.route('/api/stackblink/get_control_groups')
+def get_control_groups():
+  json_resp = json.dumps(stackblink.get_control_groups())
+  return Response(json_resp, mimetype='application/json', headers={ \
+    'Cache-Control': 'no-cache',
+  })
 
 # Kepler
 

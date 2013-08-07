@@ -10,18 +10,22 @@ import skymorph
 import pymongo
 from pymongo import Connection
 
-NUM_CRAWL = 1000
+NUM_CRAWL = 100
 connection = Connection('localhost', 27017)
 db = connection.asterank
 
 asteroids = db.asteroids
 jpl = db.jpl
 def process(asteroid):
-  prov_des = asteroid['prov_des']
-  if prov_des.strip() == '':
-    return
-  print 'crawl', prov_des
-  skymorph.images_for(prov_des)
+  target = asteroid['prov_des']
+  if target.strip() == '':
+    target = asteroid['name']
+    if target.strip() == '':
+      target = asteroid['full_name']
+      if target.strip() == '':
+        return
+  print 'crawl', target
+  skymorph.images_for(target)
 
 
 for asteroid in asteroids.find().sort('price', pymongo.DESCENDING).limit(NUM_CRAWL):

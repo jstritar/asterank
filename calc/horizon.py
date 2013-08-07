@@ -89,6 +89,7 @@ def populateDb():
   df.prov_des = pf.pdes
 
   designation_regex = re.compile('.*\(([^\)]*)\)')
+
   def UpdateProvDes(row):
     m = designation_regex.match(row['full_name'])
     if not row['prov_des'] and m:
@@ -96,8 +97,28 @@ def populateDb():
     return row
   df = df.apply(UpdateProvDes, axis=1)
 
+  # clean up the input values
   for col in df.columns:
     df[col] = df[col].str.strip()
+
+  n = 0
+  for row in reader:
+    row['spec'] = row['spec_B']
+    if row['spec'] == '':
+      newspec = THOLEN_MAPPINGS.get(row['spec_T'], None)
+      if newspec:
+        row['spec'] = newspec.strip()
+      elif row['pdes'] == '2012 DA14':
+        print 'Adjust 2012 DA14'
+        row['spec'] = 'L'
+      elif row['class'] in COMET_CLASSES:
+        row['spec'] = 'comet'
+      else:
+        continue # NOTE disable this to create the full db (about 600k objects)
+        row['spec'] = 'S'
+
+    if row['spec'] == 'C type':
+      row['spec'] = 'C'
 
   df.spec_T = df.spec_T.str.replace(':', '')
   df.spec_B = df.spec_B.str.replace(':', '')
@@ -118,6 +139,7 @@ def populateDb():
 
     row['spec_T'] = row['spec_T'].replace(':', '')
     row['spec_B'] = row['spec_B'].replace(':', '')
+    row['spec'] = row['spec'].replace(':', '')
 
     # match mass
     if row['full_name'] in massd:

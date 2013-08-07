@@ -1,10 +1,18 @@
 {% extends "base.html" %}
 
+{% block head %}
+  {% assets filter="cssmin", output="gen/packed-stackblink.css",
+  "css/stackblink.css"
+  %}
+  <link href="{{ASSET_URL}}" rel="stylesheet" />
+  {% endassets %}
+{% endblock %}
+
 {% block html_tag %}ng-app="StackblinkApp"{% endblock %}
 
 {% block scripts %}
 
-{% assets filter="jsmin", output="gen/packed-discovery.js",
+{% assets filter="jsmin", output="gen/packed-stackblink.js",
 "js/lib/kinetic-v4.4.3.min.js",
 "js/stackblink/app.js",
 "js/stackblink/controllers/Kinetic.js"
@@ -15,6 +23,24 @@
 {% endblock %}
 
 {% block content %}
-
+<div class="instruction-container" ng-show="state == 'STACKING'">
+  <span class="instruction">Step 1: Click &amp; drag images to line up stars.</span>
+</div>
+<div class="instruction-container" ng-show="state == 'BLINKING'">
+  <span class="instruction">Step 2: See any moving objects?</span>
+  <span class="blink-options">Blink interval: <input type="range" min="100" max="2000" step="10" value="1000" ng-model="blink_interval" /></span>
+</div>
+<div id="control-bar-inline">
+  <div ng-show="state == 'STACKING'">
+  <a href="#" class="stackblink-button" ng-click="StartBlink()" keyboard-shortcut="a">They're aligned (a)</a>
+  <a href="#" class="stackblink-button" ng-click="BadQuality()" keyboard-shortcut="q">Bad quality (q)</a>
+  </div>
+  <div ng-show="state == 'BLINKING'">
+    <a href="#" class="stackblink-button" ng-click="Interesting()" keyboard-shortcut="y">Yes (y)</a>
+    <a href="#" class="stackblink-button" ng-click="NotInteresting()" keyboard-shortcut="n">No (n)</a>
+    <a href="#" class="stackblink-button" ng-click="StopBlink()" keyboard-shortcut="b">Go back (b)</a>
+  </div>
+</div>
 <kinetic></kinetic>
+
 {% endblock %}
